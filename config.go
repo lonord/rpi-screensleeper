@@ -8,9 +8,9 @@ import (
 )
 
 type config struct {
-	Delay   int    `yaml:"delay"`
-	Pin     int    `yaml:"pin"`
-	Trigger string `yaml:"trigger"`
+	Delay int    `yaml:"delay"`
+	Pin   int    `yaml:"pin"`
+	Level string `yaml:"level"`
 }
 
 func readConfig(cfg string) (*config, error) {
