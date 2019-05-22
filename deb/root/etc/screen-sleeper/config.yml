@@ -1,0 +1,10 @@
+# config file for screen-sleeper
+
+# bcm pin (not physical pin) number of gpio
+pin: 4
+
+# enable level of gpio input, 'high' or 'low'
+level: high
+
+# delay seconds for gpio input
+delay: 60

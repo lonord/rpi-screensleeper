@@ -1,0 +1,8 @@
+[Unit]
+Description=The screen sleeper daemon for raspberry pi 7 inch screen by sensor trigger or other gpio input.
+
+[Service]
+ExecStart=/usr/local/bin/screen-sleeper
+
+[Install]
+WantedBy=multi-user.target

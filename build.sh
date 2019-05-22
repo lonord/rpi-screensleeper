@@ -65,7 +65,8 @@ gobuild() {
 		export GOOS=$1
 		export GOARCH=$2
 	fi
-	go build -o $target_dir/${APP_NAME}${append_suffix}${ext} \
+	out_bin=$target_dir/${APP_NAME}${append_suffix}${ext}
+	go build -o $out_bin \
 	-ldflags \
 	"\
 	-s -w \
@@ -74,6 +75,44 @@ gobuild() {
 	-X 'main.buildTime=${BUILD_TIME}' \
 	" \
 	$MAIN_DIR
+	if [ -n "$build_deb" -a "$(go env GOOS)" == "linux" ]; then
+		build_deb $(go env GOARCH) $out_bin
+	fi
+}
+
+build_deb() {
+	echo "build deb package for $1"
+	temproot="dist/linux/temproot"
+	mkdir -p $temproot
+	[ -d deb/root ] && cp -r deb/root/* $temproot/
+	mkdir -p $temproot/usr/local/bin
+	cp $2 $temproot/usr/local/bin/
+	fpm_arg=
+	if [ -x deb/after-install ]; then
+		fpm_arg="$fpm_arg --after-install deb/after-install"
+	fi
+	if [ -x deb/before-install ]; then
+		fpm_arg="$fpm_arg --before-install deb/before-install"
+	fi
+	if [ -x deb/after-remove ]; then
+		fpm_arg="$fpm_arg --after-remove deb/after-remove"
+	fi
+	if [ -x deb/before-remove ]; then
+		fpm_arg="$fpm_arg --before-remove deb/before-remove"
+	fi
+	fpm_arch=
+	if [ "$1" == "amd64" ]; then
+		fpm_arch=x86_64
+	elif [ "$1" == "arm64" ]; then
+		fpm_arch=aarch64
+	elif [ "$1" == "arm" ]; then
+		fpm_arch=armv7l
+	else
+		echo "unknow arch $1"
+		exit 1
+	fi
+	fpm -s dir -t deb -a $fpm_arch $fpm_arg -p dist/linux/$1/${APP_NAME}_${APP_VERSION}_$1.deb -n ${APP_NAME} -v ${APP_VERSION} -C $temproot .
+	rm -rf $temproot
 }
 
 showhelp() {
@@ -86,6 +125,7 @@ showhelp() {
 	echo "    -s  append os type and arch suffix of executable name (use 'foo_linux_amd64' instead of 'foo')"
 	echo "    -p  do not perform prebuild"
 	echo "    -n  build native arch"
+	echo "    --deb  build deb package (only for linux)"
 	echo "    --set-git-config  set value of versionsort.prereleaseSuffix"
 }
 
@@ -130,6 +170,9 @@ if [ $# -gt 0 ]; then
 			;;
 			-n)
 				build_native=1
+			;;
+			--deb)
+				build_deb=1
 			;;
 			--set-git-config)
 				setgitconfig
