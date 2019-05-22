@@ -100,18 +100,11 @@ build_deb() {
 	if [ -x deb/before-remove ]; then
 		fpm_arg="$fpm_arg --before-remove deb/before-remove"
 	fi
-	fpm_arch=
-	if [ "$1" == "amd64" ]; then
-		fpm_arch=x86_64
-	elif [ "$1" == "arm64" ]; then
-		fpm_arch=aarch64
-	elif [ "$1" == "arm" ]; then
-		fpm_arch=armv7l
-	else
-		echo "unknow arch $1"
-		exit 1
+	fpm_arch=$1
+	if [ "$1" == "arm" ]; then
+		fpm_arch=armhf
 	fi
-	fpm -s dir -t deb -a $fpm_arch $fpm_arg -p dist/linux/$1/${APP_NAME}_${APP_VERSION}_$1.deb -n ${APP_NAME} -v ${APP_VERSION} -C $temproot .
+	fpm -s dir -t deb -a $fpm_arch $fpm_arg -p dist/linux/$1/${APP_NAME}_${APP_VERSION}_$1.deb -n ${APP_NAME} -v ${APP_VERSION#*v} -C $temproot .
 	rm -rf $temproot
 }
 
